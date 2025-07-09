@@ -1,7 +1,16 @@
 using DataProcessingService.Business;
 using DataProcessingService.Business.Contracts.Services;
+using DataProcessingService.Middlewares;
+using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
+
+Log.Logger = new LoggerConfiguration()
+    .WriteTo.Console()
+    .WriteTo.File("Logs/log.txt", rollingInterval: RollingInterval.Day)
+    .CreateLogger();
+
+builder.Host.UseSerilog();
 
 builder.Services.AddControllers();
 builder.Services.AddOpenApi();
@@ -12,10 +21,12 @@ builder.Services.AddCors(options => {
         .AllowAnyMethod());
 });
 
-builder.Services.AddSingleton<IProcessingService, ProcessingService>();
+builder.Services.AddSingleton<IStringProcessingService, StringProcessingService>();
 
 
 var app = builder.Build();
+
+app.UseMiddleware<ExceptionHandlingMiddleware>();
 
 if (app.Environment.IsDevelopment())
 {

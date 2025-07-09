@@ -5,7 +5,7 @@ namespace DataProcessingService.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class ProcessingController(IProcessingService processingService) : ControllerBase
+public class ProcessingController(IStringProcessingService processingService) : ControllerBase
 {
     [HttpGet("stream")]
     public async Task Stream([FromQuery] string input, CancellationToken cancellationToken)

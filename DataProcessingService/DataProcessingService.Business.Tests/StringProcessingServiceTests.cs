@@ -1,14 +1,14 @@
 namespace DataProcessingService.Business.Tests;
 
 [TestFixture]
-public class ProcessingServiceTests
+public class StringProcessingServiceTests
 {
-    private ProcessingService _service;
+    private StringProcessingService _service;
 
     [SetUp]
     public void SetUp()
     {
-        _service = new ProcessingService();
+        _service = new StringProcessingService();
     }
 
     [Test]

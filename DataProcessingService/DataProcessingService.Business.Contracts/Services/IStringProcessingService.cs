@@ -1,6 +1,6 @@
 namespace DataProcessingService.Business.Contracts.Services;
 
-public interface IProcessingService
+public interface IStringProcessingService
 {
     /// <summary>
     /// Process an input string to the count plus base64 result

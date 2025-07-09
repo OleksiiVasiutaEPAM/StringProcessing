@@ -9,14 +9,14 @@ namespace DataProcessingService.Tests;
 [TestFixture]
 public class ProcessingControllerTests
 {
-    private Mock<IProcessingService> _processingServiceMock = null!;
+    private Mock<IStringProcessingService> _processingServiceMock = null!;
     private ProcessingController _controller = null!;
     private MemoryStream _responseBodyStream = null!;
 
     [SetUp]
     public void SetUp()
     {
-        _processingServiceMock = new Mock<IProcessingService>();
+        _processingServiceMock = new Mock<IStringProcessingService>();
         _controller = new ProcessingController(_processingServiceMock.Object);
 
         var context = new DefaultHttpContext();

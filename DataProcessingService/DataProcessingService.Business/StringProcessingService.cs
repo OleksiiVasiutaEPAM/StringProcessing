@@ -6,7 +6,7 @@ namespace DataProcessingService.Business;
 /// <summary>
 /// String processing service
 /// </summary>
-public class ProcessingService : IProcessingService
+public class StringProcessingService : IStringProcessingService
 {
     /// <inheritdoc />
     public string ProcessAsync(string input)
