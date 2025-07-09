@@ -1,0 +1,33 @@
+services:
+  data-processing-service:
+    build:
+      context: ./DataProcessingService
+      dockerfile: Dockerfile
+    container_name: data-processing-service
+    expose:
+      - 5075
+    environment:
+      - ASPNETCORE_URLS=http://0.0.0.0:5075
+
+  data-processing-spa:
+    build:
+      context: ./data-processing-spa
+      dockerfile: Dockerfile
+    container_name: data-processing-spa
+    expose:
+      - 4200
+    depends_on:
+      - data-processing-service
+
+  nginx:
+    build:
+      context: ./nginx
+    container_name: nginx
+    ports:
+      - 80:80
+    volumes:
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./data-processing-spa/dist/data-processing-spa/browser:/usr/share/nginx/html:ro
+    depends_on:
+      - data-processing-service
+      - data-processing-spa
