@@ -7,5 +7,5 @@ public interface IStringProcessingService
     /// </summary>
     /// <param name="input">Input string</param>
     /// <returns>Result</returns>
-    string ProcessAsync(string input);
+    string Process(string input);
 }

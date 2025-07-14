@@ -1,5 +1,6 @@
 using DataProcessingService.Business.Contracts.Services;
 using DataProcessingService.Controllers;
+using DataProcessingService.Exceptions;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Moq;
@@ -9,20 +10,16 @@ namespace DataProcessingService.Tests;
 [TestFixture]
 public class ProcessingControllerTests
 {
-    private Mock<IStringProcessingService> _processingServiceMock = null!;
+    private Mock<IStringProcessingService> _mockService = null!;
     private ProcessingController _controller = null!;
-    private MemoryStream _responseBodyStream = null!;
 
     [SetUp]
     public void SetUp()
     {
-        _processingServiceMock = new Mock<IStringProcessingService>();
-        _controller = new ProcessingController(_processingServiceMock.Object);
-
+        _mockService = new Mock<IStringProcessingService>();
+        _controller = new ProcessingController(_mockService.Object);
+        
         var context = new DefaultHttpContext();
-        _responseBodyStream = new MemoryStream();
-        context.Response.Body = _responseBodyStream;
-
         _controller.ControllerContext = new ControllerContext
         {
             HttpContext = context
@@ -30,46 +27,47 @@ public class ProcessingControllerTests
     }
 
     [Test]
-    public async Task Stream_WritesMetadataAndCharacters()
+    public async Task Stream_ShouldStreamMetadataAndCharacters()
     {
         // Arrange
-        var input = "abc";
-        var expectedResult = "a1b1c1/BASE64";
-        _processingServiceMock.Setup(s => s.ProcessAsync(input)).Returns(expectedResult);
+        const string input = "aab";
+        const string processedResult = "a2b1/processedBase64==";
 
-        var cts = new CancellationTokenSource();
-        var token = cts.Token;
+        _mockService.Setup(s => s.Process(input)).Returns(processedResult);
 
         // Act
-        await _controller.Stream(input, token);
+        var result = _controller.Stream(input, CancellationToken.None);
+
+        var streamedLines = new List<string>();
+        await foreach (var line in result)
+        {
+            streamedLines.Add(line);
+        }
 
         // Assert
-        _responseBodyStream.Seek(0, SeekOrigin.Begin);
-        var output = await new StreamReader(_responseBodyStream).ReadToEndAsync(token);
+        Assert.That(streamedLines, Is.Not.Empty);
+        Assert.That(streamedLines.First(), Is.EqualTo($"event: metadata\ndata: {processedResult.Length}\n\n"));
+        Assert.That(streamedLines.Count, Is.EqualTo(1 + processedResult.Length));
 
-        Assert.That(output, Does.Contain("event: metadata"));
-        Assert.That(output, Does.Contain($"data: {expectedResult.Length}"));
-
-        foreach (var ch in expectedResult)
+        var expectedCharacters = processedResult.ToCharArray();
+        for (var i = 0; i < expectedCharacters.Length; i++)
         {
-            Assert.That(output, Does.Contain($"data: {ch}"));
+            Assert.That(streamedLines[i + 1], Is.EqualTo($"data: {expectedCharacters[i]}\n\n"));
         }
     }
-
+    
     [Test]
-    public void Stream_ThrowsOnCancellation()
+    public void Stream_InvalidModel_ThrowsValidationFailedException()
     {
         // Arrange
-        var input = "abc";
-        _processingServiceMock.Setup(s => s.ProcessAsync(input)).Returns("abc/BASE");
-
-        var cts = new CancellationTokenSource();
-        cts.Cancel();
+        _controller.ModelState.AddModelError("input", "The input field is required.");
 
         // Act & Assert
-        Assert.ThrowsAsync<TaskCanceledException>(async () =>
+        var ex = Assert.ThrowsAsync<ValidationFailedException>(async () =>
         {
-            await _controller.Stream(input, cts.Token);
+            await foreach (var _ in _controller.Stream("", CancellationToken.None)) { }
         });
+
+        Assert.That(ex!.Errors, Contains.Key("input"));
     }
 }

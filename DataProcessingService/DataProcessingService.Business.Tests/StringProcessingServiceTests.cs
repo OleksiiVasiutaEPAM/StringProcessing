@@ -12,13 +12,13 @@ public class StringProcessingServiceTests
     }
 
     [Test]
-    public void ProcessAsync_InputIsEmpty_ReturnsSlashOnly()
+    public void ProcessAsync_InputIsEmpty_ReturnsEmptyString()
     {
         // Arrange & Act
-        var result = _service.ProcessAsync(string.Empty);
+        var result = _service.Process(string.Empty);
 
         // Assert
-        Assert.That(result, Is.EqualTo($"/{Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(""))}"));
+        Assert.That(result, Is.EqualTo(string.Empty));
     }
 
     [Test]
@@ -29,7 +29,7 @@ public class StringProcessingServiceTests
         var expected = $"a2b2c1/{Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(input))}";
 
         // Act
-        var result = _service.ProcessAsync(input);
+        var result = _service.Process(input);
 
         // Assert
         Assert.That(result, Is.EqualTo(expected));
@@ -46,7 +46,7 @@ public class StringProcessingServiceTests
         var base64 = Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(input));
         var expected = $"{expectedCounts}/{base64}";
 
-        var result = _service.ProcessAsync(input);
+        var result = _service.Process(input);
 
         // Assert
         Assert.That(result, Is.EqualTo(expected));
@@ -60,7 +60,7 @@ public class StringProcessingServiceTests
         
         // Act
         var expected = $"A2a1/{Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(input))}";
-        var result = _service.ProcessAsync(input);
+        var result = _service.Process(input);
 
         // Assert
         Assert.That(result, Is.EqualTo(expected));

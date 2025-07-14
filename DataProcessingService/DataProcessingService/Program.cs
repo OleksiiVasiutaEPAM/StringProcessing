@@ -1,6 +1,6 @@
 using DataProcessingService.Business;
 using DataProcessingService.Business.Contracts.Services;
-using DataProcessingService.Middlewares;
+using DataProcessingService.Infrastructure;
 using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -26,7 +26,10 @@ builder.Services.AddSingleton<IStringProcessingService, StringProcessingService>
 
 var app = builder.Build();
 
-app.UseMiddleware<ExceptionHandlingMiddleware>();
+app.UseExceptionHandler(errorApp =>
+{
+    errorApp.Run(GlobalExceptionHandler.HandleAsync);
+});
 
 if (app.Environment.IsDevelopment())
 {
