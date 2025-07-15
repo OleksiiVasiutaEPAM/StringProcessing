@@ -1,5 +1,4 @@
 using System.ComponentModel.DataAnnotations;
-using System.Runtime.CompilerServices;
 using DataProcessingService.Business.Contracts.Services;
 using DataProcessingService.Exceptions;
 using Microsoft.AspNetCore.Mvc;
@@ -11,7 +10,7 @@ namespace DataProcessingService.Controllers;
 public class ProcessingController(IStringProcessingService processingService) : ControllerBase
 {
     [HttpGet("stream")]
-    public async IAsyncEnumerable<string> Stream([FromQuery, Required] string input, [EnumeratorCancellation] CancellationToken cancellationToken)
+    public async Task Stream([FromQuery, Required] string input, CancellationToken cancellationToken)
     {
         if (!ModelState.IsValid)
         {
@@ -26,16 +25,18 @@ public class ProcessingController(IStringProcessingService processingService) : 
         }
         
         Response.ContentType = "text/event-stream";
-        
-        var result = processingService.Process(input);
 
-        yield return $"event: metadata\ndata: {result.Length}\n\n";
+        var result = processingService.Process(input);
+    
+        await Response.WriteAsync($"event: metadata\ndata: {result.Length}\n\n", cancellationToken);
+        await Response.Body.FlushAsync(cancellationToken);
 
         foreach (var ch in result)
         {
             cancellationToken.ThrowIfCancellationRequested();
             await Task.Delay(Random.Shared.Next(1000, 5000), cancellationToken);
-            yield return $"data: {ch}\n\n";
+            await Response.WriteAsync($"data: {ch}\n\n", cancellationToken);
+            await Response.Body.FlushAsync(cancellationToken);
         }
     }
 }
